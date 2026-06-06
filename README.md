@@ -4,19 +4,31 @@
 
 ---
 
-## 开发踩坑记录
+## 开发记录
 
-这个项目一开始只是个课程作业，没想到做到后面坑越踩越多。最大的麻烦是**跨场景单例对象失效**——GameManager、ScoreManager 这些用 `DontDestroyOnLoad` 保留下来的对象，换场景之后场景里的 UI 引用全丢了，分数文本直接变空白。最后解决办法是在 `OnSceneLoaded` 里手动重新扫描 Canvas 下的 Text，按关键词（coin / score）重新绑定，才勉强稳住。
+**跨场景单例对象引用丢失**
 
-另一个坑是**光标锁定**。第一人称/第三人称关卡里需要隐藏鼠标、锁定光标，但一按 Esc 打开暂停菜单，光标解开后有时候就锁不回去了。后来发现是 `CursorLockMode` 和 `Cursor.visible` 不同步，加了判断 `if (Cursor.lockState != CursorLockMode.Locked)` 再重新锁一次才解决。
+GameManager、ScoreManager 等使用 `DontDestroyOnLoad` 保留的对象，在场景切换后场景内 UI 引用丢失，导致分数文本显示为空白。解决方案是在 `OnSceneLoaded` 中遍历 Canvas 下的 Text 组件，按关键词（coin / score）重新绑定引用。
 
-汽车关卡的相机也比较头疼。一开始直接用 Camera.main 跟着车跑，结果车转向的时候相机一顿一顿的。后来换成 LateUpdate 里用 `Quaternion.Slerp` 平滑插值，再限制一下俯仰角 `Clamp(-maxPitchAngle, maxPitchAngle)`，手感才舒服点。还加了按住 `LeftAlt` 可以临时解锁光标，方便截图和调试。
+**光标锁定异常**
 
-音效方面，素材网站找了一圈没找到合适的，干脆自己写了个 `SimpleSFXGenerator`，用代码生成 AudioClip。金币音效参考了马里奥那种双音调上升，三角波混正弦波；过关失败分别用 C 大调和 G-E-C 下行音阶。虽然简陋，但好歹不用依赖外部资源。
+第三人称关卡中鼠标光标需要隐藏并锁定，但按下 Esc 打开暂停菜单后，光标解锁后无法重新锁定。经查是 `CursorLockMode` 与 `Cursor.visible` 状态不同步所致，增加状态判断并强制重新锁定后恢复正常。
 
-UI 做暂停菜单的时候也折腾了一阵。一开始直接用场景里已有的 Canvas 加按钮，结果跟关卡里的 Back 按钮层级打架，点不到。后来干脆代码里动态创建一个独立的 PauseCanvas，`sortingOrder = 100`，确保永远在最上层，再自己铺半透明遮罩和三个按钮。这样每个场景都能统一复用，省得每个场景都手动搭一遍。
+**汽车关卡相机抖动**
 
-Level1 到 Level4 分别用了不同角色：汽车、人形、潜艇、UFO。每个角色的移动逻辑和相机跟踪都不一样，所以拆成了 `VehicleController`、`PlayerController`、`ufoController` 几个脚本，没有硬塞到一个文件里。不过这也意味着每个关卡都要挂不同的脚本，场景设置起来有点麻烦。
+初期使用 `Camera.main` 直接跟随车辆，转向时出现明显抖动。后在 `LateUpdate` 中采用 `Quaternion.Slerp` 平滑插值，并通过 `Clamp(-maxPitchAngle, maxPitchAngle)` 限制俯仰角，相机跟随手感得以改善。同时增加了 `LeftAlt` 临时解锁光标功能，便于调试与截图。
+
+**音效资源获取**
+
+未找到合适的外部音效素材，因此自行实现 `SimpleSFXGenerator`，运行时通过代码生成 `AudioClip`。金币音效采用双音调上升设计（三角波混正弦波），过关与失败音效分别基于 C 大调与 G-E-C 下行音阶生成。
+
+**暂停菜单 UI 层级冲突**
+
+初期在场景既有 Canvas 上添加按钮，与关卡内 Back 按钮发生层级冲突。后改为代码动态创建独立 PauseCanvas，设置 `sortingOrder = 100` 保证最上层显示，并自行配置半透明遮罩与功能按钮，实现各关卡统一复用。
+
+**多角色控制系统拆分**
+
+Level1 至 Level4 分别对应汽车、人形、潜艇、UFO 四种角色，各角色移动逻辑与相机跟踪方式不同。因此拆分为 `VehicleController`、`PlayerController`、`ufoController` 独立脚本，未合并为单一文件。该方案增加了场景配置工作量，但保证了代码结构的清晰性。
 
 ## 项目结构
 
@@ -137,17 +149,29 @@ WebGL 版本构建后，把 `Team13_project/index.html` 和 `Build/` 目录一�
 
 ## Development Notes
 
-This project started out as just a course assignment, but turned into a rabbit hole of bugs. The biggest headache was **singleton objects breaking across scenes** — GameManager, ScoreManager, all those `DontDestroyOnLoad` objects would survive the scene switch but lose every UI reference in the new scene. Score text would just go blank. The fix was manually scanning the Canvas for Text components in `OnSceneLoaded`, matching keywords like "coin" or "score", and rebinding them. Not elegant, but it works.
+**Singleton Object Reference Loss Across Scenes**
 
-Another pain was **cursor locking**. Third-person levels hide the cursor and lock it to the center, but pressing Esc to open the pause menu would unlock it... and sometimes it never locked back. Turned out `CursorLockMode` and `Cursor.visible` were getting out of sync. Added a check `if (Cursor.lockState != CursorLockMode.Locked)` to force re-lock, and that fixed it.
+GameManager, ScoreManager, and other `DontDestroyOnLoad` objects persisted through scene transitions but lost their UI references in the new scene, causing score text to display as blank. The solution was to traverse Text components under the Canvas in `OnSceneLoaded`, matching keywords such as "coin" or "score", and rebind the references accordingly.
 
-The car level camera was also annoying. At first I just made `Camera.main` follow the car, but the camera jittered every time the car turned. Switched to smooth interpolation with `Quaternion.Slerp` in `LateUpdate`, clamped the pitch angle with `Clamp(-maxPitchAngle, maxPitchAngle)`, and the feel got way better. Also added `LeftAlt` to temporarily unlock the cursor for screenshots and debugging.
+**Cursor Locking Anomaly**
 
-For audio, I couldn't find good free assets, so I wrote `SimpleSFXGenerator` to generate `AudioClip` at runtime. The coin sound is a dual-tone rising arpeggio like Mario (triangle + sine wave). Success/failure use C major and a G-E-C descending scale. They're rough, but at least no external dependencies.
+In third-person levels, the mouse cursor is hidden and locked. After pressing Esc to open the pause menu, the cursor would occasionally fail to re-lock. Investigation revealed that `CursorLockMode` and `Cursor.visible` were desynchronized. Adding a state check to force re-locking resolved the issue.
 
-The pause menu UI was another struggle. At first I tried adding buttons to the existing scene Canvas, but they kept fighting with the Back button for click priority. Eventually I just spawn a dedicated PauseCanvas in code with `sortingOrder = 100`, slap a semi-transparent overlay on it, and add three buttons. Every level reuses the same logic, no need to set it up manually per scene.
+**Car Level Camera Jitter**
 
-Level 1 to Level 4 use different characters: car, humanoid, submarine, UFO. Each has its own movement logic and camera tracking, so I split them into `VehicleController`, `PlayerController`, `ufoController` instead of cramming everything into one file. Downside is every scene needs the right script attached, which is a bit tedious to set up.
+Initially, `Camera.main` directly followed the vehicle, resulting in noticeable jitter during turns. The camera was later updated to use `Quaternion.Slerp` for smooth interpolation in `LateUpdate`, with pitch clamped via `Clamp(-maxPitchAngle, maxPitchAngle)`. A `LeftAlt` temporary cursor unlock was also added for debugging and screenshot purposes.
+
+**Audio Asset Acquisition**
+
+No suitable external audio assets were available, so `SimpleSFXGenerator` was implemented to generate `AudioClip` at runtime. The coin sound uses a dual-tone rising arpeggio (triangle mixed with sine wave). Success and failure sounds are based on C major and G-E-C descending scales respectively.
+
+**Pause Menu UI Layer Conflict**
+
+Buttons added to the existing scene Canvas conflicted with the level's Back button in terms of click priority. The approach was changed to dynamically spawn an independent PauseCanvas with `sortingOrder = 100`, ensuring top-layer rendering, along with a semi-transparent overlay and functional buttons. This design allows uniform reuse across all levels.
+
+**Multi-Character Control System Separation**
+
+Levels 1 through 4 use car, humanoid, submarine, and UFO respectively, each with distinct movement logic and camera tracking. Controllers were separated into `VehicleController`, `PlayerController`, and `ufoController` rather than merged into a single file. This increases scene configuration overhead but maintains code clarity.
 
 ## Project Structure
 
