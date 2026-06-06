@@ -126,3 +126,134 @@ WebGL 版本构建后，把 `Team13_project/index.html` 和 `Build/` 目录一�
 - 游戏界面素材适配与美化
 - 配乐制作与音效资源制作导入配置
 - 基础动画效果调试（金币旋转浮动、UI 过渡）
+
+---
+
+# Coin Rush V1.0 (English)
+
+> Wang Yuning, Su Pohan | Unity 2022.3.8f1c1 | 2025–2026
+
+---
+
+## Development Notes
+
+This project started out as just a course assignment, but turned into a rabbit hole of bugs. The biggest headache was **singleton objects breaking across scenes** — GameManager, ScoreManager, all those `DontDestroyOnLoad` objects would survive the scene switch but lose every UI reference in the new scene. Score text would just go blank. The fix was manually scanning the Canvas for Text components in `OnSceneLoaded`, matching keywords like "coin" or "score", and rebinding them. Not elegant, but it works.
+
+Another pain was **cursor locking**. Third-person levels hide the cursor and lock it to the center, but pressing Esc to open the pause menu would unlock it... and sometimes it never locked back. Turned out `CursorLockMode` and `Cursor.visible` were getting out of sync. Added a check `if (Cursor.lockState != CursorLockMode.Locked)` to force re-lock, and that fixed it.
+
+The car level camera was also annoying. At first I just made `Camera.main` follow the car, but the camera jittered every time the car turned. Switched to smooth interpolation with `Quaternion.Slerp` in `LateUpdate`, clamped the pitch angle with `Clamp(-maxPitchAngle, maxPitchAngle)`, and the feel got way better. Also added `LeftAlt` to temporarily unlock the cursor for screenshots and debugging.
+
+For audio, I couldn't find good free assets, so I wrote `SimpleSFXGenerator` to generate `AudioClip` at runtime. The coin sound is a dual-tone rising arpeggio like Mario (triangle + sine wave). Success/failure use C major and a G-E-C descending scale. They're rough, but at least no external dependencies.
+
+The pause menu UI was another struggle. At first I tried adding buttons to the existing scene Canvas, but they kept fighting with the Back button for click priority. Eventually I just spawn a dedicated PauseCanvas in code with `sortingOrder = 100`, slap a semi-transparent overlay on it, and add three buttons. Every level reuses the same logic, no need to set it up manually per scene.
+
+Level 1 to Level 4 use different characters: car, humanoid, submarine, UFO. Each has its own movement logic and camera tracking, so I split them into `VehicleController`, `PlayerController`, `ufoController` instead of cramming everything into one file. Downside is every scene needs the right script attached, which is a bit tedious to set up.
+
+## Project Structure
+
+```
+Assets/
+├── Scenes/
+│   ├── Main Menu.unity        # Main menu with Start/Levels/Tips/Quit
+│   ├── Level1.unity           # Car driving (town)
+│   ├── Level2.unity           # Humanoid walking (forest)
+│   ├── Level3.unity           # Submarine underwater
+│   ├── Level4.unity           # UFO in space
+│   ├── Success.unity          # Level cleared screen
+│   └── Gameover.unity         # Game over screen
+├── Scripts/
+│   ├── GameManager.cs         # Scene switching, timer, win/lose logic
+│   ├── ScoreManager.cs        # Coin count + high score (PlayerPrefs)
+│   ├── AudioManager.cs        # BGM / SFX manager with runtime-generated sounds
+│   ├── PauseMenu.cs           # Global pause menu (spawns UI dynamically)
+│   ├── LevelPauseMenu.cs      # Per-level pause handling
+│   ├── MainMenuController.cs  # Main menu button events
+│   ├── PlayerController.cs    # Humanoid (with foot IK)
+│   ├── VehicleController.cs   # Car controls + follow camera
+│   ├── CharacterMover.cs      # Simplified humanoid movement
+│   ├── ufoController.cs       # UFO movement
+│   ├── ufoCameraController.cs # UFO third-person camera
+│   ├── Coin.cs                # Coin rotation, floating, trigger scoring
+│   ├── CountdownUI.cs         # Countdown display (flashes red when low)
+│   ├── GameResultUI.cs        # Result screen score display
+│   ├── BackToMenuButton.cs    # Generic back-to-menu button
+│   ├── ShowCursorOnResult.cs  # Force show cursor on result screens
+│   ├── RuntimeInitializer.cs  # Auto-init singletons when running from editor
+│   └── SimpleSFXGenerator.cs  # Pure code 8-bit style sound generation
+```
+
+## How to Run
+
+1. Open the project in **Unity 2022.3.8f1c1**.
+2. In `File -> Build Settings`, make sure `Main Menu` and all 4 Level scenes are in the build.
+3. Hit Play, or build to Standalone / WebGL.
+
+For WebGL, deploy `Team13_project/index.html` along with the `Build/` folder.
+
+## Controls
+
+| Key | Action |
+|-----|--------|
+| `WASD` / Arrow keys | Move |
+| `Mouse` | Rotate camera |
+| `Esc` | Open / close pause menu |
+| `Left Alt` | Temporarily unlock cursor |
+| `Left Ctrl` | Toggle walk / run (humanoid levels) |
+| `Left Shift` | Sprint (humanoid levels) |
+
+## Screenshots
+
+**Fig 1**: Main menu. Coin Rush title, Start / Levels / Tips / Quit buttons, Lowpoly forest background.
+
+![Main Menu](./screenshots/screenshot1.jpg)
+
+**Fig 2**: Pause screen. Semi-transparent black overlay, PAUSED title, Resume / Restart / Main Menu buttons.
+
+![Pause Menu](./screenshots/screenshot2.jpg)
+
+**Fig 3**: Level 1 — Car driving. Player drives a green car through a town, collecting coins along the road.
+
+![Car Level](./screenshots/screenshot3.jpg)
+
+**Fig 4**: Level 2 — Humanoid walking. Character walks through a grassland forest, coins scattered near cabins.
+
+![Walking Level](./screenshots/screenshot4.jpg)
+
+**Fig 5**: Level 3 — Underwater. Yellow submarine sails through light-blue ocean, rocks and coral around.
+
+![Underwater Level](./screenshots/screenshot5.jpg)
+
+**Fig 6**: Level 4 — Space. UFO flies through a purple starfield, ringed planets and asteroids in the background.
+
+![Space Level](./screenshots/screenshot6.jpg)
+
+---
+
+## Copyright Info
+
+- **Game Title**: Coin Rush V1.0
+- **Completion Date**: 2026
+- **First Author (Copyright Holder)**: Wang Yuning
+- **Authors**: Wang Yuning, Su Pohan
+
+### Division of Labor
+
+**Wang Yuning (First Author)**
+
+Responsible for overall architecture design and core game logic. Main contributions:
+- Game framework (singleton managers, cross-scene persistence)
+- Player movement and control systems (humanoid walk/run/jump + IK, car driving, UFO flight)
+- Collision detection and physics (coin triggers, rigidbody movement)
+- Level design (4 levels with progressive difficulty, win/lose conditions)
+- Scoring and win/lose system (real-time scoring, high score save)
+- Core UI development (main menu, pause menu, result screen)
+- Code debugging, optimization, and overall integration
+- Led full project lifecycle and version iteration
+
+**Su Pohan**
+
+Responsible for art assets and audiovisual production. Main contributions:
+- Scene modeling and Lowpoly style art refinement
+- UI asset adaptation and polishing
+- Soundtrack and SFX production, import, and configuration
+- Basic animation tuning (coin rotation/floating, UI transitions)
