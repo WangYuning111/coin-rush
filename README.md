@@ -70,24 +70,30 @@ WebGL 版本构建后，把 `Team13_project/index.html` 和 `Build/` 目录一�
 | `Left Ctrl` | 切换走/跑（人形关卡） |
 | `Left Shift` | 冲刺（人形关卡） |
 
-## 截图说明
+## 游戏截图
 
-> 以下截图需要在 `screenshots/` 目录下手动放置。将之前提供的 6 张游戏截图分别重命名后复制进去即可。
-
-| 文件名 | 对应内容 | 放置路径 |
-|--------|---------|---------|
-| `screenshot1.jpg` | 主菜单界面（Coin Rush 标题、Start / Levels / Tips / Quit 按钮） | `screenshots/screenshot1.jpg` |
-| `screenshot2.jpg` | 游戏暂停界面（PAUSED、Resume / Restart / Main Menu） | `screenshots/screenshot2.jpg` |
-| `screenshot3.jpg` | 汽车驾驶关卡（城镇道路，绿色小汽车） | `screenshots/screenshot3.jpg` |
-| `screenshot4.jpg` | 角色行走关卡（草地、小屋、金币散布） | `screenshots/screenshot4.jpg` |
-| `screenshot5.jpg` | 水下场景关卡（浅蓝色海洋、黄色潜艇） | `screenshots/screenshot5.jpg` |
-| `screenshot6.jpg` | 太空场景关卡（紫色星空、UFO、星球） | `screenshots/screenshot6.jpg` |
+**图 1**：主菜单界面。Coin Rush 标题、Start / Levels / Tips / Quit 四个按钮，背景是 Lowpoly 风格的树林和小屋。
 
 ![主菜单](./screenshots/screenshot1.jpg)
+
+**图 2**：游戏暂停界面。半透明黑色遮罩，显示 PAUSED 标题和 Resume / Restart / Main Menu 三个按钮。
+
 ![暂停界面](./screenshots/screenshot2.jpg)
+
+**图 3**：Level 1 汽车驾驶关卡。玩家操控绿色小汽车在城镇道路上行驶，收集路边的金币。
+
 ![汽车关卡](./screenshots/screenshot3.jpg)
+
+**图 4**：Level 2 角色行走关卡。人形角色在草地森林场景中行走，金币散布在小屋附近。
+
 ![行走关卡](./screenshots/screenshot4.jpg)
+
+**图 5**：Level 3 水下场景关卡。黄色潜艇在浅蓝色海洋中航行，周围有岩石和珊瑚。
+
 ![水下关卡](./screenshots/screenshot5.jpg)
+
+**图 6**：Level 4 太空场景关卡。UFO 在紫色星空中飞行，背景有带光环的星球和小行星。
+
 ![太空关卡](./screenshots/screenshot6.jpg)
 
 ---
